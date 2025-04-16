@@ -11,9 +11,19 @@ module.exports = {
     },
     resolve: {
         extensions: ['.ts', '.js'],
+        fallback: {
+            "events": require.resolve("events/"),
+            // "buffer": require.resolve("buffer/"),
+            // "stream": require.resolve("stream-browserify"),
+            // "crypto": require.resolve("crypto-browserify")
+        }
     },
     module: {
         rules: [
+            {
+                test: /\.css$/i,
+                use: ["style-loader", "css-loader"],
+            },
             {
                 test: /\.ts$/,
                 use: {
@@ -28,10 +38,6 @@ module.exports = {
                     },
                 },
                 exclude: /node_modules/,
-            },
-            {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader'],
             },
         ],
     },
