@@ -1,5 +1,8 @@
+import AuthPage from '../pages/auth-page';
+
 export default class App {
     private readonly mainElement: HTMLElement;
+    authPage: AuthPage | null = null;
 
     constructor() {
         this.mainElement = this.createMainElement();
@@ -12,6 +15,17 @@ export default class App {
         return main;
     }
 
+
     public start(): void {
+        this.showAuthPage();
+    }
+
+    private showAuthPage(): void {
+        this.clearMainElement();
+        this.authPage = new AuthPage(this.mainElement);
+    }
+
+    private clearMainElement(): void {
+        this.mainElement.innerHTML = '';
     }
 }

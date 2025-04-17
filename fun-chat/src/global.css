@@ -7,3 +7,61 @@
     box-sizing: border-box;
     list-style: none;
 }
+
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: darkgrey;
+}
+ main {
+     margin-top: 10%;
+     padding: 20px;
+     border: 1px solid black;
+     border-radius: 5px;
+ }
+
+.button {
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer; justify-content: center;
+    font-size: 16px;
+}
+
+.button__submit {
+    background-color: #4CAF50;
+    color: white;
+    width: 150px;
+}
+
+.button__info {
+    background-color: #2196F3;
+    color: white;
+    width: 150px;
+}
+
+.button:hover {
+    opacity: 0.8;
+}
+
+.auth-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px 0;
+    align-items: center;
+}
+
+input {
+    border-radius: 5px;
+    min-height: 30px;
+    padding: 10px;
+}
+
