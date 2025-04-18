@@ -1,14 +1,17 @@
-import AuthPage from '../pages/auth-page/auth-page';
+import AuthWebsocket from '../pages/auth-page/auth-websocket';
 import MainPage from '../pages/main-page/main-page';
 
 export default class App {
     private readonly mainElement: HTMLElement;
-    public authPage: AuthPage | null = null;
+    public authPage: AuthWebsocket | null = null;
     private mainPage: MainPage | null = null;
+    private currentUser: string = '';
+    private readonly ws: WebSocket;
 
     constructor() {
         this.mainElement = this.createMainElement();
         document.body.append(this.mainElement);
+        this.ws = new WebSocket('ws://localhost:4000');
     }
 
     private createMainElement(): HTMLElement {
@@ -18,27 +21,48 @@ export default class App {
     }
 
     public start(): void {
+        this.setupWebSocket();
         this.showAuthPage();
+    }
 
-        setTimeout(() => {
-            this.showMainPage();
-        }, 3000);
+    private setupWebSocket(): void {
+        this.ws.onopen = () => {
+            console.log('WebSocket working');
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        this.ws.onclose = () => {
+            console.log('WebSocket is not working');
+        };
     }
 
     private showAuthPage(): void {
         this.clearMainElement();
         this.mainPage = null;
-        this.authPage = new AuthPage(this.mainElement);
+        this.authPage = new AuthWebsocket(this.mainElement, this.ws);
+
+        this.authPage.setOnAuthSuccess((login) => {
+            this.currentUser = login;
+            this.showMainPage();
+        });
     }
 
     private showMainPage(): void {
         this.clearMainElement();
         this.authPage = null;
-        this.mainPage = new MainPage('main-page');
+        this.mainPage = new MainPage('main-page', this.currentUser, this.ws);
         this.mainElement.appendChild(this.mainPage.render());
     }
 
     private clearMainElement(): void {
         this.mainElement.innerHTML = '';
+    }
+
+    public destroy(): void {
+        this.ws.close();
+        this.clearMainElement();
     }
 }

@@ -2,11 +2,16 @@ import './main-page.css'
 
 export default class MainPage {
     private readonly container: HTMLElement;
+    currentUser: string
+    ws: WebSocket;
 
-    constructor(id: string) {
+    constructor(id: string, currentUser: string, ws: WebSocket) {
         this.container = document.createElement('main');
         this.container.id = id;
         this.container.classList.add('main');
+        this.currentUser = currentUser;
+        this.ws = ws;
+
     }
 
     render(): HTMLElement {

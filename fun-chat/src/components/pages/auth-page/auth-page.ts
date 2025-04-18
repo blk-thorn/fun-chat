@@ -1,5 +1,7 @@
+import './auth-page.css'
+
 export default class AuthPage {
-    private readonly container: HTMLElement;
+    public container: HTMLElement;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -45,5 +47,9 @@ export default class AuthPage {
         infoButton.textContent = 'Info';
         authForm.append(nameContainer, passwordContainer, submitButton, infoButton);
         this.container.append(authForm);
+    }
+
+    public destroy(): void {
+        this.container.innerHTML = '';
     }
 }

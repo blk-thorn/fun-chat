@@ -1,0 +1,9 @@
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.error-tooltip {
+    color: #da1e1e;
+    padding-top: 5px;
+}
