@@ -7,7 +7,6 @@ export default class AuthPage {
     }
 
     private render(): void {
-        const authContainer: HTMLDivElement = document.createElement('div');
         const authForm: HTMLFormElement = document.createElement('form');
         authForm.classList.add('auth-form');
         authForm.id = 'auth-form';
@@ -45,7 +44,6 @@ export default class AuthPage {
         infoButton.classList.add('button', 'button__info');
         infoButton.textContent = 'Info';
         authForm.append(nameContainer, passwordContainer, submitButton, infoButton);
-        authContainer.appendChild(authForm);
-        this.container.appendChild(authContainer);
+        this.container.append(authForm);
     }
 }
