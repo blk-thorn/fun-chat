@@ -7,6 +7,7 @@ export default class App {
     private mainPage: MainPage | null = null;
     private currentUser: string = '';
     private readonly ws: WebSocket;
+    private currentUserPassword: string = '';
 
     constructor() {
         this.mainElement = this.createMainElement();
@@ -44,8 +45,9 @@ export default class App {
         this.mainPage = null;
         this.authPage = new AuthWebsocket(this.mainElement, this.ws);
 
-        this.authPage.setOnAuthSuccess((login) => {
-            this.currentUser = login;
+        this.authPage.setOnAuthSuccess((userData: {login: string, password: string}) => {
+            this.currentUser = userData.login;
+            this.currentUserPassword = userData.password;
             this.showMainPage();
         });
     }
@@ -53,7 +55,7 @@ export default class App {
     private showMainPage(): void {
         this.clearMainElement();
         this.authPage = null;
-        this.mainPage = new MainPage('main-page', this.currentUser, this.ws);
+        this.mainPage = new MainPage('main-page', this.currentUser, this.currentUserPassword, this.ws, () => this.showAuthPage());
         this.mainElement.appendChild(this.mainPage.render());
     }
 

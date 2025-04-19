@@ -1,7 +1,7 @@
 import AuthPage from './auth-page';
 
 export default class AuthWebsocket extends AuthPage {
-    private onAuthSuccess: ((login: string) => void) | undefined;
+    private onAuthSuccess: ((user: {login: string, password: string}) => void)  | undefined;
     private onAuthError: ((error: string) => void) | undefined;
     private ws: WebSocket;
     private currentRequestId: string = '';
@@ -9,6 +9,7 @@ export default class AuthWebsocket extends AuthPage {
     constructor(container: HTMLElement, ws: WebSocket) {
         super(container);
         this.ws = ws;
+        this.onAuthSuccess = () => {};
         this.setupWebSocketListeners();
         this.setupEventListeners();
     }
@@ -76,7 +77,7 @@ export default class AuthWebsocket extends AuthPage {
         this.handleLogin();
     }
 
-    public setOnAuthSuccess(callback: (login: string) => void): void {
+    public setOnAuthSuccess(callback: (userData: {login: string, password: string}) => void): void {
         this.onAuthSuccess = callback;
     }
 
@@ -185,9 +186,14 @@ export default class AuthWebsocket extends AuthPage {
     }
 
     private handleLoginResponse(response: any, loginInput: HTMLInputElement): void {
+        const login: string = loginInput.value.trim();
+        const passwordInput: HTMLInputElement | null = this.getElement<HTMLInputElement>('#password');
+
         if (response.payload?.user?.isLogined) {
-            this.clearError(loginInput);
-            this.callIfDefined(this.onAuthSuccess, response.payload.user.login);
+            if(passwordInput) {
+            const password: string = passwordInput.value;
+            this.callIfDefined(this.onAuthSuccess, { login, password })
+            }
         }
     }
 

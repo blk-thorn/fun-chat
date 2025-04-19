@@ -1,18 +1,70 @@
 import './main-page.css'
+import MainWebsocket from '../main-page/main-websocket';
 
 export default class MainPage {
     private readonly container: HTMLElement;
-    currentUser: string
-    ws: WebSocket;
+    currentUser: string;
+    private wsHandler: MainWebsocket;
+    private users: string[] = [];
+    userPassword: string;
+    private onLogoutSuccess: () => void;
 
-    constructor(id: string, currentUser: string, ws: WebSocket) {
+    constructor(id: string, currentUser: string, userPassword: string, ws: WebSocket, onLogoutSuccess: () => void) {
+        console.log('MainPage constructor credentials:', { currentUser, userPassword });
         this.container = document.createElement('main');
         this.container.id = id;
         this.container.classList.add('main');
         this.currentUser = currentUser;
-        this.ws = ws;
+        this.wsHandler = new MainWebsocket(ws);
+        this.userPassword = userPassword;
+        this.onLogoutSuccess = onLogoutSuccess;
 
+
+        this.setupWebSocketHandlers();
+        this.wsHandler.requestActiveUsers();
     }
+
+    private handleLogout(): void {
+        if (confirm('Are you sure you want to logout?')) {
+            this.wsHandler.sendLogoutRequest(this.currentUser, this.userPassword);
+        }
+    }
+
+    private setupWebSocketHandlers(): void {
+        this.wsHandler.setOnUsersUpdate((users: string[]) => {
+            this.users = users;
+            this.updateUserList();
+        });
+        this.wsHandler.setOnLogout((user) => {
+            if (user.login === this.currentUser && !user.isLogined) {
+                this.onLogoutSuccess();
+            }
+        });
+    }
+
+    private updateUserList(): void {
+        const userListElement = this.container.querySelector('.user-list');
+        if (!userListElement) return;
+
+        userListElement.innerHTML = '';
+
+        this.users.forEach((user: any): void => {
+            const li: HTMLElement = document.createElement('li');
+            li.classList.add('user-container');
+
+            const status: HTMLElement = document.createElement('div');
+            status.classList.add('user-status');
+            status.classList.add('active');
+
+            const label: HTMLElement = document.createElement('label');
+            label.classList.add('user-login');
+            label.textContent = user.login;
+
+            li.append(status, label);
+            userListElement.append(li);
+        });
+    }
+
 
     render(): HTMLElement {
         const header: HTMLElement = this.createHeader();
@@ -35,7 +87,7 @@ export default class MainPage {
 
         const userLabel: HTMLElement  = document.createElement('p');
         userLabel.className = 'subheader';
-        userLabel.textContent = 'User: admin1';
+        userLabel.textContent = `User: ${this.currentUser}`;
 
         const chatLabel: HTMLElement  = document.createElement('p');
         userLabel.className = 'subheader';
@@ -52,6 +104,7 @@ export default class MainPage {
         exitButton.type = 'button';
         exitButton.classList.add('button');
         exitButton.textContent = 'Logout';
+        exitButton.addEventListener('click', (): void => this.handleLogout());
 
         header.append(contentWrapper, infoButton, exitButton);
         return header;
@@ -69,41 +122,15 @@ export default class MainPage {
     }
 
     private createContactsAside(): HTMLElement {
-        const aside: HTMLElement  = document.createElement('aside');
+        const aside: HTMLElement = document.createElement('aside');
         aside.classList.add('contacts');
 
-        const searchInput: HTMLInputElement  = document.createElement('input');
+        const searchInput: HTMLInputElement = document.createElement('input');
         searchInput.classList.add('search');
         searchInput.placeholder = 'Search...';
 
-        const userList: HTMLElement  = document.createElement('ul');
+        const userList: HTMLElement = document.createElement('ul');
         userList.classList.add('user-list');
-
-
-        const users: string[] = [
-            'user1', 'user2', 'user3', 'user4', 'user5', 'user6', 'user7', 'user8', 'user9', 'user10',
-            'user11', 'user12', 'user13', 'user14', 'user15', 'user16', 'user17', 'user18', 'user19', 'user20',
-            'user21', 'user22', 'user23', 'user24', 'user25', 'user26', 'user27', 'user28', 'user29', 'user30'
-        ];
-
-        users.forEach((user: string): void => {
-            const li: HTMLElement = document.createElement('li');
-            li.classList.add('user-container');
-
-            const status: HTMLElement = document.createElement('div');
-            status.classList.add('user-status');
-
-            if (users.indexOf(user) < 10) {
-                status.classList.add('active');
-            }
-
-            const label: HTMLElement = document.createElement('label');
-            label.classList.add('user-login');
-            label.textContent = user;
-
-            li.append(status, label);
-            userList.append(li);
-        });
 
         aside.append(searchInput, userList);
         return aside;
