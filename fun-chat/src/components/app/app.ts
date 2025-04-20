@@ -18,6 +18,7 @@ export default class App {
     private createMainElement(): HTMLElement {
         const mainContainer: HTMLElement = document.createElement('div');
         mainContainer.id = 'root';
+        mainContainer.className = 'root';
         return mainContainer;
     }
 
