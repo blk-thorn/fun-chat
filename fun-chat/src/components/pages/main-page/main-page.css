@@ -169,6 +169,9 @@ label {
     margin: 10px 0;
 }
 
-a {
+.footer__link {
     text-decoration: none;
+    color: black;
+    font-size: 18px;
+    border-bottom: 2px solid rgb(2, 103, 103);
 }

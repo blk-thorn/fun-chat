@@ -7,7 +7,7 @@ export default class MainPage {
     private wsHandler: MainWebsocket;
     private users: string[] = [];
     userPassword: string;
-    private onLogoutSuccess: () => void;
+    private readonly onLogoutSuccess: () => void;
 
     constructor(id: string, currentUser: string, userPassword: string, ws: WebSocket, onLogoutSuccess: () => void) {
         console.log('MainPage constructor credentials:', { currentUser, userPassword });
@@ -43,7 +43,7 @@ export default class MainPage {
     }
 
     private updateUserList(): void {
-        const userListElement = this.container.querySelector('.user-list');
+        const userListElement: Element | null = this.container.querySelector('.user-list');
         if (!userListElement) return;
 
         userListElement.innerHTML = '';
@@ -99,6 +99,10 @@ export default class MainPage {
         infoButton.type = 'button';
         infoButton.classList.add('button');
         infoButton.textContent = 'Info';
+        infoButton.addEventListener('click', (): void => {
+            window.dispatchEvent(new CustomEvent('navigate', { detail: '/info' }));
+        });
+
 
         const exitButton: HTMLButtonElement = document.createElement('button');
         exitButton.type = 'button';
@@ -180,10 +184,13 @@ export default class MainPage {
         const footer: HTMLElement = document.createElement('section');
         footer.classList.add('footer');
 
-        const rssLabel: HTMLElement = document.createElement('label');
+        const rssLabel: HTMLAnchorElement = document.createElement('a');
+        rssLabel.className = 'footer__link';
         rssLabel.textContent = 'RSSchool';
+        rssLabel.href = 'https://rs.school/courses/javascript-ru'
 
         const link: HTMLAnchorElement = document.createElement('a');
+        link.className = 'footer__link';
         link.href = 'https://github.com/blk-thorn';
         link.target = '_blank';
         link.textContent = 'Blk-thorn';

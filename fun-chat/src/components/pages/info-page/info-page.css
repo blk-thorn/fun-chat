@@ -1,0 +1,28 @@
+.about {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1024px;
+    height: 360px;
+    row-gap: 20px;
+}
+
+.about__header {
+    font-size: 32px;
+    border-bottom: 2px solid rgb(2, 103, 103);
+}
+
+.about__info {
+    display: flex;
+    text-align: center;
+    padding: 20px;
+    font-size: 24px;
+}
+
+.about__link {
+    font-size: 24px;
+    text-decoration: none;
+    color: rgb(0, 0, 0);
+    border-bottom: 2px solid rgb(2, 103, 103);
+}
