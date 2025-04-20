@@ -48,7 +48,14 @@ export default class AuthWebsocket extends AuthPage {
         const input: HTMLInputElement | null = this.getElement<HTMLInputElement>(selector);
         if (input) {
             input.addEventListener('input', this.validateInputs.bind(this));
+            input.addEventListener('paste', this.handlePaste.bind(this));
         }
+    }
+
+    private handlePaste(): void {
+        setTimeout(() => {
+            this.validateInputs();
+        }, 0);
     }
 
     private validateInputs(): void {
@@ -261,6 +268,7 @@ export default class AuthWebsocket extends AuthPage {
         const input: HTMLInputElement | null = this.getElement<HTMLInputElement>(selector);
         if (input) {
             input.removeEventListener('input', this.validateInputs.bind(this));
+            input.removeEventListener('paste', this.handlePaste.bind(this));
         }
     }
 }

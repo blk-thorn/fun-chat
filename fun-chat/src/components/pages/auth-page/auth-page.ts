@@ -13,6 +13,11 @@ export default class AuthPage {
         authForm.classList.add('auth-form');
         authForm.id = 'auth-form';
 
+        const authHeader: HTMLHeadingElement = document.createElement('h1');
+        authHeader.classList.add('auth-header');
+        authHeader.textContent = "Authorization";
+        authForm.appendChild(authHeader);
+
         const nameContainer: HTMLDivElement = document.createElement('div');
         nameContainer.classList.add('form-group');
         const nameLabel: HTMLLabelElement = document.createElement('label');
