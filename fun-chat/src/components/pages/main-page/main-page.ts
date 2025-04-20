@@ -100,6 +100,8 @@ export default class MainPage {
         infoButton.classList.add('button');
         infoButton.textContent = 'Info';
         infoButton.addEventListener('click', (): void => {
+            sessionStorage.setItem('last-visited-path', '/main');
+            window.history.pushState({}, '', '/info');
             window.dispatchEvent(new CustomEvent('navigate', { detail: '/info' }));
         });
 

@@ -6,11 +6,6 @@ export default class InfoPage {
     private infoClass: string = 'about__info';
     private linkClass: string = 'about__link';
     private buttonClass: string = 'button';
-    private readonly onBack: () => void;
-
-    constructor(onBack: () => void) {
-        this.onBack = onBack;
-    }
 
     createInfoPage(): HTMLElement {
         const main: HTMLElement = document.createElement('main');
@@ -36,7 +31,11 @@ export default class InfoPage {
         button.className = this.buttonClass;
         button.type = 'button';
         button.textContent = 'Back';
-        button.addEventListener('click', this.onBack);
+        button.addEventListener('click', () => {
+            const returnPath = sessionStorage.getItem('last-visited-path') || '/main';
+            window.history.pushState({}, '', returnPath);
+            window.dispatchEvent(new CustomEvent('navigate', { detail: returnPath }));
+        });
         main.appendChild(button);
 
         return main;
@@ -44,12 +43,6 @@ export default class InfoPage {
 
     render(): HTMLElement {
         const page: HTMLElement = this.createInfoPage();
-        const backButton: HTMLButtonElement | null = page.querySelector(`.${this.buttonClass}`);
-        if (backButton) {
-            backButton.addEventListener('click', (): void => {
-                window.dispatchEvent(new CustomEvent('navigate', { detail: '/main' }));
-            });
-        }
         return page;
     }
 }

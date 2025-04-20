@@ -24,6 +24,14 @@ export default class App {
 
     private handleInitialRoute(): void {
         const initialPath: string = window.location.pathname;
+        const state = window.history.state;
+
+        if (state?.from) {
+            if (state.from === 'auth' && initialPath === '/info') {
+                this.showInfoPage();
+                return;
+            }
+        }
         if (initialPath === '/' || initialPath === '/auth') {
             this.router.navigate('/auth');
         } else if (initialPath === '/main' || initialPath === '/info') {
@@ -57,7 +65,7 @@ export default class App {
 
     private showInfoPage(): void {
         this.clearMainElement();
-        const infoPage = new InfoPage((): void => this.router.navigate('/main'));
+        const infoPage = new InfoPage();
         this.mainElement.appendChild(infoPage.render());
     }
 

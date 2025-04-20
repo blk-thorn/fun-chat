@@ -6,6 +6,7 @@ export default class Router {
     constructor(rootElement: HTMLElement) {
         this.rootElement = rootElement;
         this.setupPopstateListener();
+        this.handlePopState();
     }
 
     private setupPopstateListener(): void {
@@ -36,4 +37,15 @@ export default class Router {
             this.navigate('/auth');
         }
     }
+
+    private handlePopState(): void {
+        window.addEventListener('popstate', () => {
+            const path = window.location.pathname;
+            if (path) {
+                const lastPath = sessionStorage.getItem('last-visited-path') || '/main';
+                this.navigate(lastPath, false);
+            }
+        });
+    }
+
 }
