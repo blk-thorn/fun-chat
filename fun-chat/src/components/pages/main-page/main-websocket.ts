@@ -3,9 +3,9 @@ import type { User } from '../../../types/types';
 export default class MainWebsocket {
     private ws: WebSocket;
     private onUsersUpdate: ((users: string[]) => void) | undefined;
-    // private onMessage: ((message: any) => void) | undefined;
     private activeUsers: Set<string> = new Set();
     private onLogout: ((user: {login: string, isLogined: boolean}) => void) | undefined;
+    private onMessage: ((message: any) => void) | undefined;
 
     constructor(ws: WebSocket) {
         this.ws = ws;
@@ -43,6 +43,11 @@ export default class MainWebsocket {
             if (this.onLogout) {
                 this.onLogout(response.payload.user);
             }
+            else if (response.type === 'MSG_SEND') {
+                if (this.onMessage) {
+                    this.onMessage(response);
+                }
+            }
         }
     }
 
@@ -68,9 +73,14 @@ export default class MainWebsocket {
         this.onUsersUpdate = callback;
     }
 
-    // public setOnMessage(callback: (message: string) => void): void {
-    //     this.onMessage = callback;
-    // }
+    public sendMessage(message: any): void {
+        try {
+            this.ws.send(JSON.stringify(message));
+            console.log('Message sent:', message);
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    }
 
     private callIfDefined<T>(callback: ((arg: T) => void) | undefined, arg: T): void {
         callback && callback(arg);
@@ -95,9 +105,12 @@ export default class MainWebsocket {
         this.onLogout = callback;
     }
 
+    public setOnMessage(callback: (message: any) => void): void {
+        this.onMessage = callback;
+    }
+
     public destroy(): void {
         this.ws.onmessage = null;
         this.onUsersUpdate = undefined;
-        // this.onMessage = undefined;
     }
 }

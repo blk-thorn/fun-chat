@@ -1,5 +1,8 @@
 import './main-page.css'
 import MainWebsocket from '../main-page/main-websocket';
+import type IMessageOptions from '../../../types/types';
+import Message from '../../../message/message';
+
 
 export default class MainPage {
     private readonly container: HTMLElement;
@@ -8,9 +11,13 @@ export default class MainPage {
     private users: string[] = [];
     userPassword: string;
     private readonly onLogoutSuccess: () => void;
+    private selectedUser: string | null = null;
+    private textarea: HTMLTextAreaElement | null  = null;
+    private sendButton: HTMLButtonElement| null  = null;
+    private chatContent: HTMLElement | null = null;
+
 
     constructor(id: string, currentUser: string, userPassword: string, ws: WebSocket, onLogoutSuccess: () => void) {
-        console.log('MainPage constructor credentials:', { currentUser, userPassword });
         this.container = document.createElement('main');
         this.container.id = id;
         this.container.classList.add('main');
@@ -19,10 +26,34 @@ export default class MainPage {
         this.userPassword = userPassword;
         this.onLogoutSuccess = onLogoutSuccess;
 
-
         this.setupWebSocketHandlers();
         this.wsHandler.requestActiveUsers();
     }
+
+    private selectUser(username: string): void {
+        this.selectedUser = username;
+
+        if (this.sendButton) {
+            this.sendButton.disabled = false;
+        }
+
+        const chatHeader: Element | null = this.container.querySelector('.chat-header label');
+        if (chatHeader) {
+            chatHeader.textContent = `Chat with ${username}`;
+        }
+        if (this.textarea) {
+            this.textarea.disabled = false;
+            this.textarea.focus();
+        }
+
+        if (this.chatContent) {
+            this.chatContent.innerHTML = '';
+            const spacer = document.createElement('div');
+            spacer.classList.add('spacer');
+            this.chatContent.appendChild(spacer);
+        }
+    }
+
 
     private handleLogout(): void {
         if (confirm('Are you sure you want to logout?')) {
@@ -40,6 +71,68 @@ export default class MainPage {
                 this.onLogoutSuccess();
             }
         });
+
+        this.wsHandler.setOnMessage((message) => {
+            this.handleIncomingMessage(message);
+        });
+    }
+
+
+    private handleIncomingMessage(messageData: {
+        id: string | null;
+        type: string;
+        payload: {
+            message: {
+                id: string;
+                from: string;
+                to: string;
+                text: string;
+                datetime: number;
+                status: {
+                    isDelivered: boolean;
+                    isReaded: boolean;
+                    isEdited: boolean;
+                };
+            };
+        };
+    }): void {
+        if (!this.chatContent || messageData.type !== "MSG_SEND") return;
+
+        const { from, to, text, status } = messageData.payload.message;
+        const isCurrentUser = from === this.currentUser;
+
+        const messageOptions: IMessageOptions = {
+            text,
+            recipient: isCurrentUser ? to : from,
+            isCurrentUser,
+            status: status.isDelivered ? (status.isReaded ? '👁✓' : '✓') : '🕒',
+            isEdited: status.isEdited,
+            datetime: messageData.payload.message.datetime
+        };
+
+        this.addMessageToChat(messageOptions);
+    }
+
+    private addMessageToChat(options: IMessageOptions): void {
+        console.log('Adding message to chat:', options);
+
+        if (!this.chatContent) {
+            console.error('chatContent is null!');
+            return;
+        }
+
+        try {
+            const message = new Message(options);
+            const messageElement = message.render();
+            console.log('Created message element:', messageElement);
+
+            this.chatContent.appendChild(messageElement);
+            this.chatContent.scrollTop = this.chatContent.scrollHeight;
+
+            console.log('Message added successfully');
+        } catch (error) {
+            console.error('Error adding message to chat:', error);
+        }
     }
 
     private updateUserList(): void {
@@ -59,6 +152,10 @@ export default class MainPage {
             const label: HTMLElement = document.createElement('label');
             label.classList.add('user-login');
             label.textContent = user.login;
+
+            label.addEventListener('click', (): void => {
+                this.selectUser(user.login);
+            });
 
             li.append(status, label);
             userListElement.append(li);
@@ -150,8 +247,8 @@ export default class MainPage {
         header.classList.add('chat-header');
         header.innerHTML = '<label></label>';
 
-        const content: HTMLElement = document.createElement('article');
-        content.classList.add('chat-content');
+        this.chatContent = document.createElement('article');
+        this.chatContent.classList.add('chat-content');
 
         const spacer: HTMLElement = document.createElement('div');
         spacer.classList.add('spacer');
@@ -160,26 +257,78 @@ export default class MainPage {
         infoLabel.classList.add('info-text');
         infoLabel.textContent = 'Choose user to send a message...';
 
-        content.append(spacer, infoLabel);
+        this.chatContent.append(spacer, infoLabel);
 
         const form: HTMLElement = document.createElement('form');
         form.classList.add('chat-input');
 
-        const textarea: HTMLTextAreaElement = document.createElement('textarea');
-        textarea.classList.add('chat-textarea');
-        textarea.placeholder = 'Your message...';
-        textarea.disabled = true;
+        this.textarea = document.createElement('textarea');
+        this.textarea.classList.add('chat-textarea');
+        this.textarea.placeholder = 'Your message...';
+        this.textarea.disabled = true;
 
-        const button: HTMLButtonElement = document.createElement('button');
-        button.type = 'button';
-        button.classList.add('button');
-        button.textContent = 'Send';
-        button.disabled = true;
+        this.sendButton = document.createElement('button');
+        this.sendButton.type = 'button';
+        this.sendButton.classList.add('button');
+        this.sendButton.textContent = 'Send';
+        this.sendButton.disabled = true;
 
-        form.append(textarea, button);
+        this.sendButton.addEventListener('click', () => {
+            this.sendMessage();
+        });
 
-        article.append(header, content, form);
+        this.textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+
+        form.append(this.textarea, this.sendButton);
+
+        article.append(header, this.chatContent, form);
         return article;
+    }
+
+    private sendMessage(): void {
+        if (!this.selectedUser || !this.textarea || !this.textarea.value.trim()) {
+            return;
+        }
+
+        const messageText: string = this.textarea.value.trim();
+
+        const messageOptions: IMessageOptions = {
+            text: messageText,
+            recipient: this.selectedUser,
+            isCurrentUser: true,
+            status: '🕒',
+            datetime: Date.now()
+        };
+
+        this.addMessageToChat(messageOptions);
+
+        const message = {
+            id: null,
+            type: "MSG_SEND",
+            payload: {
+                message: {
+                    id: '',
+                    from: this.currentUser,
+                    to: this.selectedUser,
+                    text: messageText,
+                    datetime: Date.now(),
+                    status: {
+                        isDelivered: false,
+                        isReaded: false,
+                        isEdited: false
+                    }
+                }
+            }
+        };
+
+        this.wsHandler.sendMessage(message);
+
+        this.textarea.value = '';
     }
 
     private createFooter(): HTMLElement {
