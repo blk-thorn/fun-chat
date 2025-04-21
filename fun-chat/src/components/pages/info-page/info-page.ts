@@ -32,9 +32,7 @@ export default class InfoPage {
         button.type = 'button';
         button.textContent = 'Back';
         button.addEventListener('click', () => {
-            const returnPath = sessionStorage.getItem('last-visited-path') || '/main';
-            window.history.pushState({}, '', returnPath);
-            window.dispatchEvent(new CustomEvent('navigate', { detail: returnPath }));
+            window.history.back();
         });
         main.appendChild(button);
 

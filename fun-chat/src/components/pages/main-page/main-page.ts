@@ -48,7 +48,7 @@ export default class MainPage {
 
         if (this.chatContent) {
             this.chatContent.innerHTML = '';
-            const spacer = document.createElement('div');
+            const spacer: HTMLDivElement = document.createElement('div');
             spacer.classList.add('spacer');
             this.chatContent.appendChild(spacer);
         }
@@ -62,17 +62,17 @@ export default class MainPage {
     }
 
     private setupWebSocketHandlers(): void {
-        this.wsHandler.setOnUsersUpdate((users: string[]) => {
+        this.wsHandler.setOnUsersUpdate((users: string[]): void => {
             this.users = users;
             this.updateUserList();
         });
-        this.wsHandler.setOnLogout((user) => {
+        this.wsHandler.setOnLogout((user): void => {
             if (user.login === this.currentUser && !user.isLogined) {
                 this.onLogoutSuccess();
             }
         });
 
-        this.wsHandler.setOnMessage((message) => {
+        this.wsHandler.setOnMessage((message): void => {
             this.handleIncomingMessage(message);
         });
     }
@@ -99,7 +99,7 @@ export default class MainPage {
         if (!this.chatContent || messageData.type !== "MSG_SEND") return;
 
         const { from, to, text, status } = messageData.payload.message;
-        const isCurrentUser = from === this.currentUser;
+        const isCurrentUser: boolean = from === this.currentUser;
 
         const messageOptions: IMessageOptions = {
             text,
@@ -123,7 +123,7 @@ export default class MainPage {
 
         try {
             const message = new Message(options);
-            const messageElement = message.render();
+            const messageElement:HTMLElement = message.render();
             console.log('Created message element:', messageElement);
 
             this.chatContent.appendChild(messageElement);
@@ -198,8 +198,7 @@ export default class MainPage {
         infoButton.textContent = 'Info';
         infoButton.addEventListener('click', (): void => {
             sessionStorage.setItem('last-visited-path', '/main');
-            window.history.pushState({}, '', '/info');
-            window.dispatchEvent(new CustomEvent('navigate', { detail: '/info' }));
+            window.location.hash = '#/info';
         });
 
 

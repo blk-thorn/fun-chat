@@ -200,6 +200,7 @@ export default class AuthWebsocket extends AuthPage {
             if(passwordInput) {
             const password: string = passwordInput.value;
             this.callIfDefined(this.onAuthSuccess, { login, password })
+                window.location.hash = '#/main';
             }
         }
     }

@@ -51,9 +51,7 @@ export default class AuthPage {
         infoButton.classList.add('button', 'button__info');
         infoButton.textContent = 'Info';
         infoButton.addEventListener('click', (): void => {
-            sessionStorage.setItem('last-visited-path', '/auth');
-            window.history.pushState({}, '', '/info');
-            window.dispatchEvent(new CustomEvent('navigate', { detail: '/info' }));
+            window.location.hash = '#/info';
         });
         authForm.append(nameContainer, passwordContainer, submitButton, infoButton);
         this.container.append(authForm);
