@@ -1,13 +1,15 @@
-import type IMessageOptions from '../types/types';
+import type { IMessageOptions } from '../types/types';
 import './message.css';
 
 export default class Message {
     private readonly messageText: string;
     private readonly messageDateTime: Date;
-    private readonly recipientName: string;
+    public recipientName: string;
     public isCurrentUser: boolean;
     private readonly deliveryStatus: string;
     private readonly isEdited: boolean;
+    private readonly id: string;
+    public currentUser: string;
 
     constructor(options: IMessageOptions) {
         this.messageText = options.text;
@@ -16,6 +18,8 @@ export default class Message {
         this.isCurrentUser = options.isCurrentUser ?? false;
         this.deliveryStatus = options.status || '✓';
         this.isEdited = options.isEdited || false;
+        this.id = options.id;
+        this.currentUser = options.currentUser || '';
     }
 
     private formatTime(): string {
@@ -32,6 +36,9 @@ export default class Message {
     render(): HTMLElement {
         const messageWrapper: HTMLDivElement = document.createElement('div');
         messageWrapper.className = 'message-wrapper';
+            if (this.id) {
+                messageWrapper.setAttribute('data-message-id', this.id);
+            }
 
         const messageBlock: HTMLDivElement = document.createElement('div');
         messageBlock.className = 'message';
@@ -41,7 +48,7 @@ export default class Message {
 
         const userSpan: HTMLSpanElement = document.createElement('span');
         userSpan.className = 'message__user';
-        userSpan.textContent = `To: ${this.recipientName}`;
+        userSpan.textContent = `${this.currentUser}`;
         messageHeader.appendChild(userSpan);
 
         const datetimeSpan: HTMLSpanElement = document.createElement('span');

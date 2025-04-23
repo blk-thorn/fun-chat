@@ -22,8 +22,9 @@
     border-radius: 5px;
 }
 
-label {
+.subheader {
     font-size: 18px;
+    font-weight: 600;
 }
 
 .content-wrapper {
@@ -117,17 +118,18 @@ label {
     max-height: 35px;
     width: 100%;
     border-bottom: 1px solid black;
+
 }
 
 .chat-content {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     align-items: center;
     width: 100%;
     height: 100%;
     position: relative;
     row-gap: 10px;
+    overflow-y: scroll;
 }
 
 .info-text {

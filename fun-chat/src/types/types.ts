@@ -1,16 +1,37 @@
-export interface User {
-    id: number;
+export default interface User {
     login: string;
-    password: string;
+    isLogined: boolean;
+    isOnline?: boolean;
+    id?: number;
+    password?: string;
+};
+
+export interface MessageData {
+    id: string;
+    type: string;
+    payload: {
+        message: {
+            id: string;
+            from: string;
+            to: string;
+            text: string;
+            datetime: number;
+            status: {
+                isDelivered: boolean;
+                isReaded: boolean;
+                isEdited: boolean;
+            };
+        };
+    };
 }
 
-export default interface IMessageOptions {
+export interface IMessageOptions {
     recipient: string;
     datetime?: number;
     text: string;
-    time?: string;
-    sender?: string;
     isCurrentUser?: boolean;
-    status?: string; // '✓', '👁✓', '🕒'
+    status?: string;
     isEdited?: boolean;
+    id: string;
+    currentUser?: string;
 }

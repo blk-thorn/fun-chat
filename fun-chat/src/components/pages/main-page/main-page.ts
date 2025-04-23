@@ -1,23 +1,28 @@
 import './main-page.css'
 import MainWebsocket from '../main-page/main-websocket';
-import type IMessageOptions from '../../../types/types';
+import type { IMessageOptions } from '../../../types/types';
 import Message from '../../../message/message';
-
+import type User from '../../../types/types';
 
 export default class MainPage {
     private readonly container: HTMLElement;
     currentUser: string;
     private wsHandler: MainWebsocket;
-    private users: string[] = [];
+    private users: User[] = [];
     userPassword: string;
     private readonly onLogoutSuccess: () => void;
     private selectedUser: string | null = null;
-    private textarea: HTMLTextAreaElement | null  = null;
-    private sendButton: HTMLButtonElement| null  = null;
+    private textarea: HTMLTextAreaElement | null = null;
+    private sendButton: HTMLButtonElement | null = null;
     private chatContent: HTMLElement | null = null;
 
-
-    constructor(id: string, currentUser: string, userPassword: string, ws: WebSocket, onLogoutSuccess: () => void) {
+    constructor(
+        id: string,
+        currentUser: string,
+        userPassword: string,
+        ws: WebSocket,
+        onLogoutSuccess: () => void
+    ) {
         this.container = document.createElement('main');
         this.container.id = id;
         this.container.classList.add('main');
@@ -28,6 +33,34 @@ export default class MainPage {
 
         this.setupWebSocketHandlers();
         this.wsHandler.requestActiveUsers();
+        this.wsHandler.requestInactiveUsers();
+        this.setupTabSync();
+    }
+
+    private setupTabSync(): void {
+        window.addEventListener('focus', () => {
+            this.wsHandler.requestActiveUsers();
+        });
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'chat-update' && event.newValue) {
+                const data = JSON.parse(event.newValue);
+                if (data.user === this.currentUser) {
+                    this.wsHandler.requestActiveUsers();
+                }
+            }
+        });
+    }
+
+    private notifyOtherTabs(): void {
+        localStorage.setItem(
+            'chat-update',
+            JSON.stringify({
+                user: this.currentUser,
+                timestamp: Date.now(),
+            })
+        );
+        localStorage.removeItem('chat-update');
     }
 
     private selectUser(username: string): void {
@@ -41,6 +74,7 @@ export default class MainPage {
         if (chatHeader) {
             chatHeader.textContent = `Chat with ${username}`;
         }
+
         if (this.textarea) {
             this.textarea.disabled = false;
             this.textarea.focus();
@@ -48,35 +82,33 @@ export default class MainPage {
 
         if (this.chatContent) {
             this.chatContent.innerHTML = '';
-            const spacer: HTMLDivElement = document.createElement('div');
+            const spacer = document.createElement('div');
             spacer.classList.add('spacer');
             this.chatContent.appendChild(spacer);
         }
     }
 
-
     private handleLogout(): void {
-        if (confirm('Are you sure you want to logout?')) {
-            this.wsHandler.sendLogoutRequest(this.currentUser, this.userPassword);
-        }
+        this.wsHandler.sendLogoutRequest(this.currentUser, this.userPassword);
     }
 
     private setupWebSocketHandlers(): void {
-        this.wsHandler.setOnUsersUpdate((users: string[]): void => {
+        this.wsHandler.setOnUsersUpdate((users: User[]) => {
             this.users = users;
             this.updateUserList();
         });
-        this.wsHandler.setOnLogout((user): void => {
+
+        this.wsHandler.setOnLogout((user: { login: string; isLogined: boolean }) => {
             if (user.login === this.currentUser && !user.isLogined) {
                 this.onLogoutSuccess();
             }
         });
 
-        this.wsHandler.setOnMessage((message): void => {
+        this.wsHandler.setOnMessage((message) => {
             this.handleIncomingMessage(message);
+            this.notifyOtherTabs();
         });
     }
-
 
     private handleIncomingMessage(messageData: {
         id: string | null;
@@ -96,42 +128,75 @@ export default class MainPage {
             };
         };
     }): void {
-        if (!this.chatContent || messageData.type !== "MSG_SEND") return;
+        if (!this.chatContent || messageData.type !== 'MSG_SEND') return;
 
-        const { from, to, text, status } = messageData.payload.message;
-        const isCurrentUser: boolean = from === this.currentUser;
+        const { message } = messageData.payload;
+        const isForCurrentUser: boolean = message.to === this.currentUser;
+        const isOurOwnMessage: boolean = message.from === this.currentUser;
 
-        const messageOptions: IMessageOptions = {
-            text,
-            recipient: isCurrentUser ? to : from,
-            isCurrentUser,
-            status: status.isDelivered ? (status.isReaded ? '👁✓' : '✓') : '🕒',
-            isEdited: status.isEdited,
-            datetime: messageData.payload.message.datetime
-        };
+        if (isForCurrentUser || isOurOwnMessage) {
+            const isCurrentUser: boolean = message.from === this.currentUser;
+            const existingMessage: Element | null = this.chatContent.querySelector(
+                `[data-message-id="${message.id}"]`
+            );
 
-        this.addMessageToChat(messageOptions);
+            if (existingMessage) {
+                const statusElement: Element | null = existingMessage.querySelector('.message__status');
+                if (statusElement) {
+                    statusElement.textContent = message.status.isDelivered
+                        ? message.status.isReaded
+                            ? '👁✓'
+                            : '✓'
+                        : '🕒';
+                    statusElement.className = `message__status ${
+                        message.status.isDelivered
+                            ? message.status.isReaded
+                                ? 'message__status--read'
+                                : ''
+                            : 'message__status--sending'
+                    }`;
+                }
+            } else {
+                const messageOptions: IMessageOptions = {
+                    text: message.text,
+                    recipient: isCurrentUser ? message.to : message.from,
+                    isCurrentUser,
+                    status: message.status.isDelivered
+                        ? message.status.isReaded
+                            ? '👁✓'
+                            : '✓'
+                        : '🕒',
+                    isEdited: message.status.isEdited,
+                    datetime: message.datetime,
+                    id: message.id,
+                };
+
+                this.addMessageToChat(messageOptions);
+            }
+
+            if (isForCurrentUser && !isOurOwnMessage) {
+                this.selectUser(message.from);
+            }
+        }
     }
 
     private addMessageToChat(options: IMessageOptions): void {
-        console.log('Adding message to chat:', options);
-
         if (!this.chatContent) {
             console.error('chatContent is null!');
             return;
         }
 
         try {
-            const message = new Message(options);
-            const messageElement:HTMLElement = message.render();
-            console.log('Created message element:', messageElement);
+            const message = new Message({
+                ...options,
+                currentUser: this.currentUser,
+            });
+            const messageElement: HTMLElement = message.render();
 
             this.chatContent.appendChild(messageElement);
             this.chatContent.scrollTop = this.chatContent.scrollHeight;
-
-            console.log('Message added successfully');
         } catch (error) {
-            console.error('Error adding message to chat:', error);
+            console.error(error);
         }
     }
 
@@ -141,19 +206,23 @@ export default class MainPage {
 
         userListElement.innerHTML = '';
 
-        this.users.forEach((user: any): void => {
-            const li: HTMLElement = document.createElement('li');
+        const filteredUsers: User[] = this.users.filter(
+            (user: User): boolean | '' => user.login && user.login !== this.currentUser
+        );
+
+        filteredUsers.forEach((user: User): void => {
+            const li: HTMLLIElement = document.createElement('li');
             li.classList.add('user-container');
 
-            const status: HTMLElement = document.createElement('div');
+            const status: HTMLDivElement = document.createElement('div');
             status.classList.add('user-status');
-            status.classList.add('active');
+            status.classList.add(user.isOnline ? 'active' : 'inactive');
 
-            const label: HTMLElement = document.createElement('label');
+            const label: HTMLLabelElement = document.createElement('label');
             label.classList.add('user-login');
             label.textContent = user.login;
 
-            label.addEventListener('click', (): void => {
+            label.addEventListener('click', () => {
                 this.selectUser(user.login);
             });
 
@@ -162,32 +231,28 @@ export default class MainPage {
         });
     }
 
-
     render(): HTMLElement {
         const header: HTMLElement = this.createHeader();
         const content: HTMLElement = this.createContent();
         const footer: HTMLElement = this.createFooter();
 
-        this.container.append(header);
-        this.container.append(content);
-        this.container.append(footer);
-
+        this.container.append(header, content, footer);
         return this.container;
     }
 
-    private createHeader(): HTMLElement  {
-        const header: HTMLElement  = document.createElement('section');
+    private createHeader(): HTMLElement {
+        const header: HTMLElement = document.createElement('section');
         header.classList.add('header');
 
-        const contentWrapper: HTMLElement  = document.createElement('article');
+        const contentWrapper: HTMLElement = document.createElement('article');
         contentWrapper.classList.add('content-wrapper');
 
-        const userLabel: HTMLElement  = document.createElement('p');
+        const userLabel: HTMLParagraphElement = document.createElement('p');
         userLabel.className = 'subheader';
         userLabel.textContent = `User: ${this.currentUser}`;
 
-        const chatLabel: HTMLElement  = document.createElement('p');
-        userLabel.className = 'subheader';
+        const chatLabel: HTMLParagraphElement = document.createElement('p');
+        chatLabel.className = 'subheader';
         chatLabel.textContent = 'Fun Chat';
 
         contentWrapper.append(userLabel, chatLabel);
@@ -201,8 +266,7 @@ export default class MainPage {
             window.location.hash = '#/info';
         });
 
-
-        const exitButton: HTMLButtonElement = document.createElement('button');
+        const exitButton: HTMLButtonElement  = document.createElement('button');
         exitButton.type = 'button';
         exitButton.classList.add('button');
         exitButton.textContent = 'Logout';
@@ -212,12 +276,12 @@ export default class MainPage {
         return header;
     }
 
-    private createContent(): HTMLElement  {
-        const content: HTMLElement  = document.createElement('section');
+    private createContent(): HTMLElement {
+        const content: HTMLElement = document.createElement('section');
         content.classList.add('content');
 
-        const aside: HTMLElement  = this.createContactsAside();
-        const dialog: HTMLElement  = this.createChat();
+        const aside: HTMLElement = this.createContactsAside();
+        const dialog: HTMLElement = this.createChat();
 
         content.append(aside, dialog);
         return content;
@@ -231,7 +295,7 @@ export default class MainPage {
         searchInput.classList.add('search');
         searchInput.placeholder = 'Search...';
 
-        const userList: HTMLElement = document.createElement('ul');
+        const userList: HTMLUListElement = document.createElement('ul');
         userList.classList.add('user-list');
 
         aside.append(searchInput, userList);
@@ -249,17 +313,18 @@ export default class MainPage {
         this.chatContent = document.createElement('article');
         this.chatContent.classList.add('chat-content');
 
-        const spacer: HTMLElement = document.createElement('div');
+        const spacer: HTMLDivElement = document.createElement('div');
         spacer.classList.add('spacer');
 
-        const infoLabel: HTMLElement = document.createElement('label');
+        const infoLabel: HTMLLabelElement = document.createElement('label');
         infoLabel.classList.add('info-text');
         infoLabel.textContent = 'Choose user to send a message...';
 
         this.chatContent.append(spacer, infoLabel);
 
-        const form: HTMLElement = document.createElement('form');
+        const form: HTMLFormElement = document.createElement('form');
         form.classList.add('chat-input');
+        form.addEventListener('submit', (e) => e.preventDefault());
 
         this.textarea = document.createElement('textarea');
         this.textarea.classList.add('chat-textarea');
@@ -272,11 +337,11 @@ export default class MainPage {
         this.sendButton.textContent = 'Send';
         this.sendButton.disabled = true;
 
-        this.sendButton.addEventListener('click', () => {
+        this.sendButton.addEventListener('click', (): void => {
             this.sendMessage();
         });
 
-        this.textarea.addEventListener('keydown', (e) => {
+        this.textarea.addEventListener('keydown', (e: KeyboardEvent): void => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.sendMessage();
@@ -284,7 +349,6 @@ export default class MainPage {
         });
 
         form.append(this.textarea, this.sendButton);
-
         article.append(header, this.chatContent, form);
         return article;
     }
@@ -295,20 +359,11 @@ export default class MainPage {
         }
 
         const messageText: string = this.textarea.value.trim();
-
-        const messageOptions: IMessageOptions = {
-            text: messageText,
-            recipient: this.selectedUser,
-            isCurrentUser: true,
-            status: '🕒',
-            datetime: Date.now()
-        };
-
-        this.addMessageToChat(messageOptions);
+        if (!messageText) return;
 
         const message = {
             id: null,
-            type: "MSG_SEND",
+            type: 'MSG_SEND',
             payload: {
                 message: {
                     id: '',
@@ -319,15 +374,15 @@ export default class MainPage {
                     status: {
                         isDelivered: false,
                         isReaded: false,
-                        isEdited: false
-                    }
-                }
-            }
+                        isEdited: false,
+                    },
+                },
+            },
         };
 
         this.wsHandler.sendMessage(message);
-
         this.textarea.value = '';
+        this.notifyOtherTabs();
     }
 
     private createFooter(): HTMLElement {
@@ -337,7 +392,7 @@ export default class MainPage {
         const rssLabel: HTMLAnchorElement = document.createElement('a');
         rssLabel.className = 'footer__link';
         rssLabel.textContent = 'RSSchool';
-        rssLabel.href = 'https://rs.school/courses/javascript-ru'
+        rssLabel.href = 'https://rs.school/courses/javascript-ru';
 
         const link: HTMLAnchorElement = document.createElement('a');
         link.className = 'footer__link';
@@ -345,7 +400,7 @@ export default class MainPage {
         link.target = '_blank';
         link.textContent = 'Blk-thorn';
 
-        const yearLabel: HTMLElement = document.createElement('label');
+        const yearLabel: HTMLLabelElement = document.createElement('label');
         yearLabel.textContent = '2025';
 
         footer.append(rssLabel, link, yearLabel);

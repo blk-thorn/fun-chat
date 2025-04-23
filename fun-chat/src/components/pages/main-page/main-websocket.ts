@@ -1,11 +1,12 @@
-import type { User } from '../../../types/types';
+import type User from '../../../types/types';
 
 export default class MainWebsocket {
     private ws: WebSocket;
-    private onUsersUpdate: ((users: string[]) => void) | undefined;
+    private onUsersUpdate: ((users: User[]) => void) | undefined;
     private activeUsers: Set<string> = new Set();
     private onLogout: ((user: {login: string, isLogined: boolean}) => void) | undefined;
     private onMessage: ((message: any) => void) | undefined;
+    private onMessageHistory: ((messages: any[]) => void) | undefined;
 
     constructor(ws: WebSocket) {
         this.ws = ws;
@@ -19,7 +20,7 @@ export default class MainWebsocket {
                 console.log('Response:', response);
                 this.handleServerResponse(response);
             } catch (error) {
-                console.error('Error parsing WebSocket message:', error);
+                console.error(error);
             }
         };
 
@@ -43,11 +44,12 @@ export default class MainWebsocket {
             if (this.onLogout) {
                 this.onLogout(response.payload.user);
             }
-            else if (response.type === 'MSG_SEND') {
-                if (this.onMessage) {
-                    this.onMessage(response);
-                }
+        } else if (response.type === 'MSG_SEND') {
+            if (this.onMessage) {
+                this.onMessage(response);
             }
+        } else if (response.type === 'MSG_FROM_USER') {
+            this.callIfDefined(this.onMessageHistory, response.payload.messages || []);
         }
     }
 
@@ -69,16 +71,15 @@ export default class MainWebsocket {
         this.ws.send(JSON.stringify(request));
     }
 
-    public setOnUsersUpdate(callback: (users: string[]) => void): void {
+    public setOnUsersUpdate(callback: (users: User[]) => void): void {
         this.onUsersUpdate = callback;
     }
 
     public sendMessage(message: any): void {
         try {
             this.ws.send(JSON.stringify(message));
-            console.log('Message sent:', message);
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error(error);
         }
     }
 
@@ -97,7 +98,6 @@ export default class MainWebsocket {
                 }
             }
         };
-        console.log('Request:', request);
         this.ws.send(JSON.stringify(request));
     }
 
@@ -106,7 +106,12 @@ export default class MainWebsocket {
     }
 
     public setOnMessage(callback: (message: any) => void): void {
-        this.onMessage = callback;
+        this.ws.addEventListener('message', (event): void => {
+            const data = JSON.parse(event.data);
+            if (data.type === "MSG_SEND") {
+                callback(data);
+            }
+        });
     }
 
     public destroy(): void {
