@@ -18,7 +18,6 @@ export default class AuthWebsocket extends AuthPage {
         this.ws.onmessage = (event): void => {
             try {
                 const response = this.parseWebSocketMessage(event.data);
-                console.log(response);
                 this.handleServerResponse(response);
             } catch (error) {
                 this.handleWebSocketError(error);
@@ -198,8 +197,8 @@ export default class AuthWebsocket extends AuthPage {
 
         if (response.payload?.user?.isLogined) {
             if(passwordInput) {
-            const password: string = passwordInput.value;
-            this.callIfDefined(this.onAuthSuccess, { login, password })
+                const password: string = passwordInput.value;
+                this.callIfDefined(this.onAuthSuccess, { login, password })
                 window.location.hash = '#/main';
             }
         }

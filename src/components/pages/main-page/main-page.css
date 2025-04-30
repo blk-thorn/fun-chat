@@ -1,3 +1,7 @@
+
+::-webkit-scrollbar {
+    width: 0;
+}
 .main {
     align-items: center;
     display: flex;
@@ -186,4 +190,105 @@
 
 .spacer {
     height: 100%;
+}
+
+.user-container {
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.user-container:hover {
+    background-color: #f5f5f5;
+}
+
+.user-container.selected {
+    background-color: #e3f2fd;
+}
+
+.user-label-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 1;
+    margin-left: 10px;
+}
+
+.user-badge {
+    background: #ff4444;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 12px;
+    min-width: 18px;
+    text-align: center;
+    display: inline-block;
+}
+
+.user-badge.has-unread {
+    display: inline-block;
+}
+
+.user-badge:empty {
+    display: none;
+}
+
+.user-login {
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.user-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* Заголовки групп пользователей */
+.user-list-header {
+    padding: 8px 16px;
+    font-weight: bold;
+    color: #666;
+    font-size: 12px;
+    text-transform: uppercase;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    cursor: default;
+    user-select: none;
+}
+
+.user-list-header:hover {
+    background-color: #f5f5f5;
+}
+
+
+.user-list-divider {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 8px 16px;
+    list-style: none;
+}
+
+.user-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.user-status.active {
+    background-color: #4caf50;
+}
+
+.user-status.inactive {
+    background-color: #f44336;
+}
+
+.no-users {
+    padding: 16px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
 }
