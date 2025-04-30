@@ -1,65 +1,65 @@
 {
-  "name": "fun-chat",
-  "version": "1.0.0",
-  "description": "SPA",
-  "main": "src/index.js",
-  "scripts": {
-    "test": "npm test",
-    "lint": "eslint . --ext .ts,.tsx",
-    "stylelint": "stylelint '**/*.{css,scss}'",
-    "format": "prettier --write '**/*.{js,ts,tsx,css,scss,json,md}'",
-    "format:check": "prettier --list-different '**/*.{js,ts,tsx,css,scss,json,md}'",
-    "prepare": "husky",
-    "start": "webpack serve --open",
-    "build": "webpack",
-    "pre-commit": "lint-staged"
-  },
-  "lint-staged": {
-    "*.{js,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{css,scss}": [
-      "stylelint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rolling-scopes-school/blk-thorn-JSFE2024Q4.git"
-  },
-  "author": "Victoria Ternovaya",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/rolling-scopes-school/blk-thorn-JSFE2024Q4/issues"
-  },
-  "homepage": "https://github.com/rolling-scopes-school/blk-thorn-JSFE2024Q4#readme",
-  "devDependencies": {
-    "@eslint/js": "^9.24.0",
-    "@typescript-eslint/eslint-plugin": "^8.30.1",
-    "@typescript-eslint/parser": "^8.30.1",
-    "css-loader": "^7.1.2",
-    "eslint": "^9.21.0",
-    "eslint-config-prettier": "^10.1.2",
-    "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-unicorn": "^57.0.0",
-    "globals": "^16.0.0",
-    "html-webpack-plugin": "^5.6.3",
-    "husky": "^9.1.7",
-    "lint-staged": "^15.5.1",
-    "prettier": "^3.5.3",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.5.2",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.30.1",
-    "webpack": "^5.99.5",
-    "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.1"
-  },
-  "dependencies": {
-    "events": "^3.3.0"
-  }
+    "name": "fun-chat",
+    "version": "1.0.0",
+    "description": "SPA",
+    "main": "src/index.js",
+    "scripts": {
+        "test": "npm test",
+        "lint": "eslint . --ext .ts,.tsx",
+        "stylelint": "stylelint '**/*.{css,scss}'",
+        "format": "prettier --write '**/*.{js,ts,tsx,css,scss,json,md}'",
+        "format:check": "prettier --list-different '**/*.{js,ts,tsx,css,scss,json,md}'",
+        "prepare": "husky",
+        "start": "webpack serve --open",
+        "build": "webpack",
+        "pre-commit": "lint-staged"
+    },
+    "lint-staged": {
+        "*.{js,ts,tsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{css,scss}": [
+            "stylelint --fix",
+            "prettier --write"
+        ],
+        "*.{json,md}": [
+            "prettier --write"
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/blk-thorn/fun-chat.git"
+    },
+    "author": "Victoria Ternovaya",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/blk-thorn/fun-chat/issues"
+    },
+    "homepage": "https://github.com/blk-thorn/fun-chat#readme",
+    "devDependencies": {
+        "@eslint/js": "^9.24.0",
+        "@typescript-eslint/eslint-plugin": "^8.30.1",
+        "@typescript-eslint/parser": "^8.30.1",
+        "css-loader": "^7.1.2",
+        "eslint": "^9.21.0",
+        "eslint-config-prettier": "^10.1.2",
+        "eslint-plugin-prettier": "^5.2.6",
+        "eslint-plugin-unicorn": "^57.0.0",
+        "globals": "^16.0.0",
+        "html-webpack-plugin": "^5.6.3",
+        "husky": "^9.1.7",
+        "lint-staged": "^15.5.1",
+        "prettier": "^3.5.3",
+        "style-loader": "^4.0.0",
+        "ts-loader": "^9.5.2",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.30.1",
+        "webpack": "^5.99.5",
+        "webpack-cli": "^6.0.1",
+        "webpack-dev-server": "^5.2.1"
+    },
+    "dependencies": {
+        "events": "^3.3.0"
+    }
 }

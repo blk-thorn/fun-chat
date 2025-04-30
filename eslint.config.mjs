@@ -1,38 +1,60 @@
+import path from "path";
 import globals from "globals";
-import pluginJs from "@eslint/js";
+import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import unicornPlugin from "eslint-plugin-unicorn";
+import unicorn from "eslint-plugin-unicorn";
 
-/** @type {import('eslint').Linter.Config[]} */
+/** @type {import("eslint").Linter.FlatConfig[]} */
 export default [
-    { files: ["**/*.{js,mjs,cjs,ts,tsx}"] },
-    { languageOptions: { globals: globals.browser } },
-    pluginJs.configs.recommended,
+    {
+        files: ["**/*.{js,mjs,cjs,ts,tsx}"]
+    },
+
+    {
+        languageOptions: {
+            globals: globals.browser
+        }
+    },
+
+    js.configs.recommended,
+
     ...tseslint.configs.recommended,
     ...tseslint.configs.recommendedTypeChecked,
+
+    unicorn.configs.recommended,
+
     {
         plugins: {
-            "@typescript-eslint": tseslint.plugin,
-            unicorn: unicornPlugin,
+            "@typescript-eslint": tseslint.plugin
         },
-        rules: {
-            "noInlineConfig": true,
-            "reportUnusedDisableDirectives": true,
 
+        linterOptions: {
+            noInlineConfig: true,
+            reportUnusedDisableDirectives: true
+        },
+
+        rules: {
             "@typescript-eslint/consistent-type-assertions": [
                 "error",
-                { "assertionStyle": "never" }
+                { assertionStyle: "never" }
             ],
             "@typescript-eslint/consistent-type-imports": "error",
             "@typescript-eslint/explicit-function-return-type": "error",
             "@typescript-eslint/explicit-member-accessibility": [
                 "error",
-                { "accessibility": "explicit", "overrides": { "constructors": "off" } }
+                {
+                    accessibility: "explicit",
+                    overrides: { constructors: "off" }
+                }
             ],
             "@typescript-eslint/member-ordering": "error",
+            "@typescript-eslint/consistent-type-definitions": [
+                "error",
+                "type"
+            ],
+
             "class-methods-use-this": "error",
 
-            "@typescript-eslint/consistent-type-definitions": ["error", "type"],
             "unicorn/no-array-callback-reference": "off",
             "unicorn/no-array-for-each": "off",
             "unicorn/no-array-reduce": "off",
@@ -42,25 +64,23 @@ export default [
             "unicorn/prevent-abbreviations": [
                 "error",
                 {
-                    "allowList": {
-                        "acc": true,
-                        "env": true,
-                        "i": true,
-                        "j": true,
-                        "props": true,
-                        "Props": true
+                    allowList: {
+                        acc: true,
+                        env: true,
+                        i: true,
+                        j: true,
+                        props: true,
+                        Props: true
                     }
                 }
             ]
         },
+
         languageOptions: {
             parserOptions: {
-                project: "./tsconfig.json",
-                tsconfigRootDir: "."
+                project: path.resolve("./tsconfig.json"),
+                tsconfigRootDir: path.resolve(".")
             }
         }
-    },
-    {
-        ...unicornPlugin.configs.recommended,
     }
 ];

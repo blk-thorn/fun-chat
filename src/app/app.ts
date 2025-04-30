@@ -1,76 +1,84 @@
-import AuthWebsocket from '../pages/auth-page/auth-websocket';
-import MainPage from '../pages/main-page/main-page';
-import InfoPage from '../pages/info-page/info-page';
-import Router from '../router/router';
+import AuthWebsocket from '../components/pages/auth-page/auth-websocket';
+import MainPage from '../components/pages/main-page/main-page';
+import InfoPage from '../components/pages/info-page/info-page';
+import Router from '../components/router/router';
 
 export default class App {
-    private readonly mainElement: HTMLElement;
     public authPage: AuthWebsocket | null = null;
-    private mainPage: MainPage | null = null;
-    private readonly ws: WebSocket;
     public router: Router;
 
+    private readonly mainElement: HTMLElement;
+    private mainPage: MainPage | null = null;
+    private readonly ws: WebSocket;
+
     constructor() {
-        this.mainElement = this.createMainElement();
+        this.mainElement = App.createMainElement();
         document.body.append(this.mainElement);
         this.ws = new WebSocket('ws://localhost:4000');
-
         this.router = new Router(this.mainElement);
         this.setupRoutes();
-        this.handleInitialRoute();
     }
 
-    private handleInitialRoute(): void {
-        const hash = window.location.hash.substring(1) || '/auth';
-
-        const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
-        const currentUser = sessionStorage.getItem('currentUser');
-        const userPassword = sessionStorage.getItem('userPassword');
-
-        if (hash === '/auth') {
-            this.router.navigate('/auth', false);
-        } else if (hash === '/info') {
-            this.router.navigate('/info', false);
-        } else if (hash === '/main') {
-            if (isAuthenticated && currentUser && userPassword) {
-                this.router.navigate('/main', false);
-            } else {
-                window.location.hash = '#/auth';
-            }
-        } else {
-            window.location.hash = '#/auth';
-        }
-    }
-
-    private createMainElement(): HTMLElement {
-        const mainContainer: HTMLElement = document.createElement('div');
+    private static createMainElement(): HTMLElement {
+        const mainContainer = document.createElement('div');
         mainContainer.id = 'root';
         mainContainer.className = 'root';
         return mainContainer;
     }
 
-    private setupRoutes(): void {
-        this.router.addRoute('/auth', (): void => this.showAuthPage());
-        this.router.addRoute('/main', (): void => this.showMainPage());
-        this.router.addRoute('/info', (): void => this.showInfoPage());
-    }
-
     public start(): void {
         this.setupWebSocket();
+        this.handleInitialRoute();
     }
 
-    private showInfoPage(): void {
+    public destroy(): void {
+        this.ws.close();
         this.clearMainElement();
-        const infoPage = new InfoPage();
-        this.mainElement.appendChild(infoPage.render());
-        sessionStorage.setItem('last-visited-path', '/info');
+    }
+
+    private handleInitialRoute(): void {
+        const hash = globalThis.location.hash.slice(1) || '/auth';
+        const isAuthenticated =
+            sessionStorage.getItem('isAuthenticated') === 'true';
+        const currentUser = sessionStorage.getItem('currentUser');
+        const userPassword = sessionStorage.getItem('userPassword');
+
+        switch (hash) {
+            case '/auth': {
+                this.router.navigate('/auth', false);
+
+                break;
+            }
+            case '/info': {
+                this.router.navigate('/info', false);
+
+                break;
+            }
+            case '/main': {
+                if (isAuthenticated && currentUser && userPassword) {
+                    this.router.navigate('/main', false);
+                } else {
+                    globalThis.location.hash = '#/auth';
+                }
+
+                break;
+            }
+            default: {
+                globalThis.location.hash = '#/auth';
+            }
+        }
+    }
+
+    private setupRoutes(): void {
+        this.router.addRoute('/auth', () => this.showAuthPage());
+        this.router.addRoute('/main', () => this.showMainPage());
+        this.router.addRoute('/info', () => this.showInfoPage());
     }
 
     private setupWebSocket(): void {
-        this.ws.onopen = (): void => {
-            console.log('WebSocket connected');
-
-            const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+        this.ws.addEventListener('open', () => {
+            const isAuthenticated =
+                sessionStorage.getItem('isAuthenticated') === 'true';
             const currentUser = sessionStorage.getItem('currentUser');
             const userPassword = sessionStorage.getItem('userPassword');
 
@@ -79,44 +87,47 @@ export default class App {
                     id: `reauth_${Date.now()}`,
                     type: 'USER_LOGIN',
                     payload: {
-                        user: {
-                            login: currentUser,
-                            password: userPassword
-                        }
-                    }
+                        user: { login: currentUser, password: userPassword },
+                    },
                 };
                 this.ws.send(JSON.stringify(reAuthRequest));
             }
-        };
+        });
 
-        this.ws.onerror = (error: Event): void => {
+        this.ws.addEventListener('error', (error: Event) => {
             console.error('WebSocket error:', error);
-        };
+        });
 
-        this.ws.onclose = (): void => {
+        this.ws.addEventListener('close', () => {
             console.log('WebSocket closed');
-        };
+        });
+    }
+
+    private showInfoPage(): void {
+        this.clearMainElement();
+        const infoPage = new InfoPage();
+        this.mainElement.append(infoPage.render());
+        sessionStorage.setItem('last-visited-path', '/info');
     }
 
     private showAuthPage(): void {
         this.clearMainElement();
         this.mainPage = null;
-
         sessionStorage.removeItem('isAuthenticated');
         sessionStorage.removeItem('currentUser');
         sessionStorage.removeItem('userPassword');
-
         this.authPage = new AuthWebsocket(this.mainElement, this.ws);
 
-        this.authPage.setOnAuthSuccess((userData: {login: string, password: string}): void => {
-            sessionStorage.setItem('isAuthenticated', 'true');
-            sessionStorage.setItem('currentUser', userData.login);
-            sessionStorage.setItem('userPassword', userData.password);
+        this.authPage.setOnAuthSuccess(
+            (userData: { login: string; password: string }) => {
+                sessionStorage.setItem('isAuthenticated', 'true');
+                sessionStorage.setItem('currentUser', userData.login);
+                sessionStorage.setItem('userPassword', userData.password);
+                this.router.navigate('/main');
+            }
+        );
 
-            this.router.navigate('/main');
-        });
-
-        this.authPage.setOnAuthError((error: string): void => {
+        this.authPage.setOnAuthError((error: string) => {
             console.error('Auth error:', error);
         });
     }
@@ -124,7 +135,6 @@ export default class App {
     private showMainPage(): void {
         this.clearMainElement();
         this.authPage = null;
-
         const currentUser = sessionStorage.getItem('currentUser');
         const userPassword = sessionStorage.getItem('userPassword');
 
@@ -138,13 +148,9 @@ export default class App {
             currentUser,
             userPassword,
             this.ws,
-            (): void => {
-                this.handleLogout();
-            }
+            () => this.handleLogout()
         );
-
-        this.mainElement.appendChild(this.mainPage.render());
-
+        this.mainElement.append(this.mainPage.render());
         sessionStorage.setItem('last-visited-path', '/main');
     }
 
@@ -154,31 +160,16 @@ export default class App {
         sessionStorage.removeItem('userPassword');
         sessionStorage.removeItem('last-visited-path');
         sessionStorage.removeItem('lastSelectedUser');
-
-        if (this.mainPage && typeof (this.mainPage as any).destroy === 'function') {
-            (this.mainPage as any).destroy();
-        }
+        this.mainPage?.destroy?.();
         this.mainPage = null;
-
         this.router.navigate('/auth');
     }
 
     private clearMainElement(): void {
-        if (this.authPage) {
-            this.authPage.destroy();
-            this.authPage = null;
-        }
-
-        if (this.mainPage && typeof (this.mainPage as any).destroy === 'function') {
-            (this.mainPage as any).destroy();
-        }
+        this.authPage?.destroy?.();
+        this.authPage = null;
+        this.mainPage?.destroy?.();
         this.mainPage = null;
-
         this.mainElement.innerHTML = '';
-    }
-
-    public destroy(): void {
-        this.ws.close();
-        this.clearMainElement();
     }
 }
